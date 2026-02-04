@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { AppState, AnalysisResult, Hairstyle } from './types';
 import { HAIRSTYLES, ICONS } from './constants';
@@ -23,11 +24,10 @@ const App: React.FC = () => {
       setState(AppState.STYLE_SELECTION);
     } catch (error) {
       console.error("Analysis failed", error);
-      // Fallback for demo stability
       setAnalysis({
         faceShape: "Square",
         recommendations: ["Textured Fringe", "Burst Fade"],
-        features: ["Strong Jawline", "Balanced Forehead"]
+        features: ["Defined Jawline", "Pro-Symmetry"]
       });
       setState(AppState.STYLE_SELECTION);
     } finally {
@@ -47,7 +47,7 @@ const App: React.FC = () => {
       setState(AppState.RESULT);
     } catch (error) {
       console.error("Generation failed", error);
-      alert("Style application failed. Please try a different angle or lighting.");
+      alert("Style application failed. This can happen if the original photo is too dark or blurry. Please try again with better lighting.");
       setState(AppState.STYLE_SELECTION);
     } finally {
       setIsProcessing(false);
@@ -65,7 +65,6 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen max-w-md mx-auto bg-black text-white relative overflow-hidden font-sans">
-      {/* Header */}
       <header className="p-6 flex items-center justify-between z-50">
         <div className="flex items-center gap-3">
            <div className="w-11 h-11 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/20">
@@ -79,19 +78,17 @@ const App: React.FC = () => {
         {state !== AppState.CAMERA && (
           <button 
             onClick={reset}
-            className="p-3 glass-card rounded-full hover:bg-white/10 active:scale-90 transition-all"
+            className="p-3 glass-card rounded-full hover:bg-white/10 active:scale-90 transition-all border border-white/5"
           >
             <ICONS.Refresh />
           </button>
         )}
       </header>
 
-      {/* Main UI */}
       <main className="flex-1 relative w-full h-full flex flex-col px-4 pb-4 overflow-hidden">
-        
         {state === AppState.CAMERA && (
-          <div className="flex-1 flex flex-col">
-            <div className="flex-1 relative rounded-[2.5rem] overflow-hidden shadow-2xl">
+          <div className="flex-1 flex flex-col animate-in fade-in duration-500">
+            <div className="flex-1 relative rounded-[2.5rem] overflow-hidden shadow-2xl border border-white/5">
               <CameraView isActive={true} onCapture={handleCapture} />
               <div className="absolute top-8 left-1/2 -translate-x-1/2 w-max">
                 <div className="glass-card px-6 py-3 rounded-2xl border border-white/10 text-center shadow-2xl glow-blue">
@@ -144,12 +141,12 @@ const App: React.FC = () => {
 
             <h3 className="text-lg font-[900] uppercase tracking-tighter italic mb-4 px-2">Trending Styles</h3>
             
-            <div className="grid grid-cols-2 gap-4 flex-1 overflow-y-auto pb-12 snap-scrollbar">
+            <div className="grid grid-cols-2 gap-4 flex-1 overflow-y-auto pb-12 snap-scrollbar pr-1">
               {HAIRSTYLES.map((style) => (
                 <button
                   key={style.id}
                   onClick={() => handleApplyStyle(style)}
-                  className="group relative flex flex-col p-6 glass-card rounded-[2rem] text-left transition-all hover:bg-white/[0.08] hover:border-blue-500/50 hover:-translate-y-1 active:scale-95 shadow-xl"
+                  className="group relative flex flex-col p-6 glass-card rounded-[2rem] text-left transition-all hover:bg-white/[0.08] hover:border-blue-500/50 hover:-translate-y-1 active:scale-95 shadow-xl border border-white/5"
                 >
                   <div className="w-14 h-14 bg-white/5 rounded-2xl flex items-center justify-center text-3xl mb-5 group-hover:bg-blue-600/20 transition-all">
                     {style.icon}
@@ -167,7 +164,7 @@ const App: React.FC = () => {
             <div className="relative">
               <div className="w-48 h-48 border-[8px] border-blue-500/5 border-t-blue-600 rounded-full animate-spin" />
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-28 h-28 glass-card rounded-full flex items-center justify-center">
+                <div className="w-28 h-28 glass-card rounded-full flex items-center justify-center border border-white/10">
                   <span className="text-6xl animate-pulse">{selectedStyle?.icon}</span>
                 </div>
               </div>
@@ -196,7 +193,7 @@ const App: React.FC = () => {
             <div className="mt-8 flex gap-4">
               <button
                 onClick={reset}
-                className="flex-[0.4] py-6 glass-card rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-white/10 active:scale-95"
+                className="flex-[0.4] py-6 glass-card rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-white/10 active:scale-95 border border-white/5"
               >
                 <ICONS.ArrowLeft /> Retake
               </button>
@@ -204,10 +201,10 @@ const App: React.FC = () => {
                 onClick={() => {
                   const link = document.createElement('a');
                   link.href = resultImage;
-                  link.download = 'raza-style.png';
+                  link.download = `raza-look-${selectedStyle?.id}.png`;
                   link.click();
                 }}
-                className="flex-1 py-6 bg-blue-600 rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 shadow-xl active:scale-95"
+                className="flex-1 py-6 bg-blue-600 rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 shadow-xl active:scale-95 border border-blue-400/30"
               >
                 <ICONS.Download /> Save Look
               </button>
@@ -216,7 +213,6 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Footer Navigation */}
       <footer className="px-10 py-8 border-t border-white/[0.04] flex justify-between items-center bg-black/95">
          <button onClick={reset} className="flex flex-col items-center gap-2 opacity-30 hover:opacity-100 transition-all">
            <ICONS.Camera />

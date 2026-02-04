@@ -1,3 +1,4 @@
+
 import React, { useRef, useEffect, useState } from 'react';
 import { ICONS } from '../constants';
 
@@ -25,9 +26,8 @@ const CameraView: React.FC<CameraViewProps> = ({ onCapture, isActive }) => {
     setLoading(true);
     setError(null);
     
-    // Comprehensive constraint fallback loop
     const constraintChoices = [
-      { video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }, audio: false },
+      { video: { facingMode: 'user', width: { ideal: 1080 }, height: { ideal: 1920 } }, audio: false },
       { video: { facingMode: 'user' }, audio: false },
       { video: { width: { ideal: 640 } }, audio: false },
       { video: true, audio: false }
@@ -42,7 +42,6 @@ const CameraView: React.FC<CameraViewProps> = ({ onCapture, isActive }) => {
         if (stream) break;
       } catch (err: any) {
         lastError = err;
-        console.warn("Retrying camera with generic constraints...", err.name);
       }
     }
 
@@ -73,15 +72,31 @@ const CameraView: React.FC<CameraViewProps> = ({ onCapture, isActive }) => {
       const video = videoRef.current;
       const canvas = canvasRef.current;
       
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
+      // Target a max dimension of 1024px for optimal AI performance
+      const MAX_DIM = 1024;
+      let width = video.videoWidth;
+      let height = video.videoHeight;
+
+      if (width > height) {
+        if (width > MAX_DIM) {
+          height *= MAX_DIM / width;
+          width = MAX_DIM;
+        }
+      } else {
+        if (height > MAX_DIM) {
+          width *= MAX_DIM / height;
+          height = MAX_DIM;
+        }
+      }
+
+      canvas.width = width;
+      canvas.height = height;
       const ctx = canvas.getContext('2d');
       if (ctx) {
-        // We draw the video frame directly.
-        // Even though preview is mirrored visually, the source buffer is often standard.
-        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        // Draw standard orientation for the AI processing
+        ctx.drawImage(video, 0, 0, width, height);
         
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.85); // Compress slightly
         const base64 = dataUrl.split(',')[1];
         onCapture(base64);
       }
@@ -95,11 +110,11 @@ const CameraView: React.FC<CameraViewProps> = ({ onCapture, isActive }) => {
           <div className="w-16 h-16 bg-red-500/10 rounded-full flex items-center justify-center mb-6 border border-red-500/20 text-red-500">
             <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
           </div>
-          <p className="font-black text-white uppercase tracking-widest mb-2">Hardware Error</p>
-          <p className="text-white/40 text-[10px] leading-relaxed uppercase tracking-widest mb-8">{error}</p>
+          <p className="font-black text-white uppercase tracking-widest mb-2 text-sm">Hardware Error</p>
+          <p className="text-white/40 text-[10px] leading-relaxed uppercase tracking-widest mb-8 px-4">{error}</p>
           <button 
             onClick={startCamera}
-            className="px-8 py-3 bg-blue-600 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-blue-500 transition-all"
+            className="px-8 py-3 bg-blue-600 rounded-full text-[10px] font-black uppercase tracking-[0.2em] shadow-xl hover:bg-blue-500 transition-all active:scale-95"
           >
             Retry Connection
           </button>
@@ -111,7 +126,7 @@ const CameraView: React.FC<CameraViewProps> = ({ onCapture, isActive }) => {
             autoPlay
             playsInline
             muted
-            style={{ transform: 'scaleX(-1)' }} // Mirror visual preview
+            style={{ transform: 'scaleX(-1)' }}
             className={`w-full h-full object-cover transition-opacity duration-1000 ${loading ? 'opacity-0' : 'opacity-100'}`}
           />
           <canvas ref={canvasRef} className="hidden" />
@@ -126,10 +141,7 @@ const CameraView: React.FC<CameraViewProps> = ({ onCapture, isActive }) => {
           {!loading && (
             <div className="absolute inset-0 pointer-events-none flex items-center justify-center">
               <div className="relative w-72 h-[28rem] flex items-center justify-center">
-                {/* Face Guide */}
                 <div className="absolute inset-0 border border-white/10 rounded-[50%_50%_45%_45%] shadow-[0_0_100px_rgba(37,99,235,0.05)] pulse-ring"></div>
-                
-                {/* Corners */}
                 <div className="absolute top-0 left-0 w-14 h-14 border-t-2 border-l-2 border-blue-500/40 rounded-tl-[3.5rem]"></div>
                 <div className="absolute top-0 right-0 w-14 h-14 border-t-2 border-r-2 border-blue-500/40 rounded-tr-[3.5rem]"></div>
                 <div className="absolute bottom-0 left-0 w-14 h-14 border-b-2 border-l-2 border-blue-500/40 rounded-bl-[3.5rem]"></div>

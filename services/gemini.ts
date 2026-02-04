@@ -12,7 +12,7 @@ export const analyzeFace = async (base64Image: string): Promise<AnalysisResult> 
       {
         parts: [
           { inlineData: { mimeType: 'image/jpeg', data: base64Image } },
-          { text: "Analyze the person's face shape (e.g., oval, round, square, heart, diamond), forehead size, and jawline. Specifically for men's grooming, suggest 3 hairstyle styles that would suit them. Return as JSON." }
+          { text: "Analyze this man's face for grooming. Identify his face shape (oval, square, etc.) and specific facial features. Recommend 3 hairstyles. Return strictly as JSON." }
         ]
       }
     ],
@@ -40,24 +40,26 @@ export const applyHairstyle = async (base64Image: string, stylePrompt: string): 
     contents: {
       parts: [
         { inlineData: { mimeType: 'image/jpeg', data: base64Image } },
-        { text: `Modify the image to give the man this specific hairstyle: ${stylePrompt}. 
-
-CRITICAL INSTRUCTIONS:
-1. ONLY change the hair on the head. 
-2. KEEP the facial features (eyes, nose, mouth, skin texture) 100% identical to the original.
-3. MATCH the lighting, shadow, and environment of the original image exactly.
-4. BLEND the new hairline naturally with the forehead and temples.
-5. If the original image has a beard, KEEP the beard unchanged.
-6. The result must look like a real photograph taken in a professional barbershop.` }
+        { text: `Edit this photo. Apply this specific men's hairstyle: ${stylePrompt}. 
+        Keep the person's face, features, and background identical. Only change the hair. Ensure a realistic, professional barbershop result.` }
       ]
+    },
+    config: {
+      imageConfig: {
+        aspectRatio: "1:1"
+      }
     }
   });
 
-  for (const part of response.candidates?.[0]?.content.parts || []) {
-    if (part.inlineData) {
-      return `data:image/png;base64,${part.inlineData.data}`;
+  // Nano banana models can return multiple parts; find the one with inlineData
+  const candidate = response.candidates?.[0];
+  if (candidate?.content?.parts) {
+    for (const part of candidate.content.parts) {
+      if (part.inlineData?.data) {
+        return `data:image/png;base64,${part.inlineData.data}`;
+      }
     }
   }
   
-  throw new Error('Failed to generate hairstyle image');
+  throw new Error('No image returned from AI');
 };
